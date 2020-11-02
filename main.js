@@ -5,7 +5,7 @@ const handlebars = require('express-handlebars')
 const mysql = require('mysql2/promise')
 
 // SQL
-const SQL_FIND_BY_NAME = 'select * from apps where name like ? limit ?'
+const SQL_FIND_BY_NAME = 'select * from apps where name like ? limit ? offset ?'
 
 // configure PORT
 const PORT = parseInt(process.argv[2]) || parseInt(process.env.PORT) || 3000
@@ -54,6 +54,8 @@ app.get('/', (req, resp) => {
     resp.render('index')
 })
 
+let offsetDB = 0
+
 app.get('/search', 
     async (req, resp) => {
         const search = req.query.search
@@ -67,17 +69,50 @@ app.get('/search',
             
             //const results = await conn.query(SQL_FIND_BY_NAME, [ `%${search}%`, 10])
             //const recs = results[0]
-            const [ recs, _ ] = await conn.query(SQL_FIND_BY_NAME, [ `%${search}%`, 10])
+            const [ recs, _ ] = await conn.query(SQL_FIND_BY_NAME, [ `%${search}%`, 10, offsetDB])
 
-            console.info('recs = ', recs)
+            //console.info('recs = ', recs)
             
             resp.status(200)
             resp.type('text/html')
-            resp.render('result', {
-                search, recs
-            
-            })
+            resp.render('result', 
+                { search, recs, hasResult: !!recs.length }
+            )
+        } catch(e) {
+            console.error('Error = ', e)
+        } finally {
+            // release connection
+            conn.release()
+        }
+})
 
+app.get('/offset', 
+    async (req, resp) => {
+        const toOffset = req.query.buttons
+        const search = req.query.search
+
+        offsetDB += parseInt(toOffset)
+        if (offsetDB < 0) offsetDB = 0
+        console.info(offsetDB)
+        console.info(search)
+        
+        // acquire a connection from the pool
+        const conn = await pool.getConnection()
+
+        try {
+            // perform the query
+            
+            //const results = await conn.query(SQL_FIND_BY_NAME, [ `%${search}%`, 10])
+            //const recs = results[0]
+            const [ recs, _ ] = await conn.query(SQL_FIND_BY_NAME, [ `%${search}%`, 10, offsetDB])
+
+            //console.info('recs = ', recs)
+            
+            resp.status(200)
+            resp.type('text/html')
+            resp.render('result', 
+                { search, recs, hasResult: !!recs.length }
+            )
         } catch(e) {
             console.error('Error = ', e)
         } finally {
