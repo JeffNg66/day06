@@ -1,0 +1,27 @@
+<h3>Your search of {{ search }}</h3>
+
+<div class="col">
+    <table class="table mt-3">
+        <thead>
+            <tr>
+                <th>app_id</th>
+                <th>name</th>
+                <th>category</th>
+                <th>rating</th>
+                <th>installs</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each recs}}
+            <tr>
+                <td>{{this.app_id}}</td>
+                <td>{{this.name}}</td>
+                <td>{{this.category}}</td>
+                <td>{{this.rating}}</td>
+                <td>{{this.installs}}</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+
